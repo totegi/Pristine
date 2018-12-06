@@ -91,7 +91,9 @@ $ npm install pristinejs --save
 ## Custom Validator
 
 ```javascript
-Pristine.addValidator(nameOrElem, handler, errorMessage, priority, halt);
+var pristine = new Pristine(document.getElementById("form1"));
+// errorMessage can be omitted and defined in config['lang'] with the name as key
+pristine.addValidator(nameOrElem, handler, errorMessage, priority, halt);
 ```
 
 ### Add a custom validator to a field
