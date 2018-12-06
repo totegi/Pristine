@@ -14,36 +14,15 @@ const PRISTINE_ERROR = 'pristine-error';
 const SELECTOR = "input:not([type^=hidden]):not([type^=submit]), select, textarea";
 const ALLOWED_ATTRIBUTES = ["required", "min", "max", 'minlength', 'maxlength', 'pattern'];
 
-const validators = {};
-
-const _ = function (name, validator) {
-    validator.name = name;
-    if (!validator.msg)
-        validator.msg = lang[name];
-    if (validator.priority === undefined)
-        validator.priority = 1;
-    validators[name] = validator;
-};
-
-_('text', { fn: (val) => true, priority: 0});
-_('required', { fn: function(val){ return (this.type === 'radio' || this.type === 'checkbox') ? groupedElemCount(this) : val !== undefined && val !== ''}, priority: 99, halt: true});
-_('email', { fn: (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)});
-_('number', { fn: (val) => !val || !isNaN(parseFloat(val)), priority: 2 });
-_('integer', { fn: (val) => val && /^\d+$/.test(val) });
-_('minlength', { fn: (val, length) => !val || val.length >= parseInt(length) });
-_('maxlength', { fn: (val, length) => !val || val.length <= parseInt(length) });
-_('min', { fn: function(val, limit){ return !val || (this.type === 'checkbox' ? groupedElemCount(this) >= parseInt(limit) : parseFloat(val) >= parseFloat(limit)); } });
-_('max', { fn: function(val, limit){ return !val || (this.type === 'checkbox' ? groupedElemCount(this) <= parseInt(limit) : parseFloat(val) <= parseFloat(limit)); } });
-_('pattern', { fn: (val, pattern) => { let m = pattern.match(new RegExp('^/(.*?)/([gimy]*)$')); return !val || (new RegExp(m[1], m[2])).test(val);} });
-
-
 export default function Pristine(form, config, live){
+    const validators = {};
     
     let self = this;
-
+    self.lang = (config && config.lang) ? config.lang : lang; 
     init(form, config, live);
     
     function init(form, config, live){
+        _buildValidators();
 
         form.setAttribute("novalidate", "true");
 
@@ -83,6 +62,26 @@ export default function Pristine(form, config, live){
         }.bind(self));
     }
 
+    const _ = function (name, validator) {
+        validator.name = name;
+        if (!validator.msg)
+            validator.msg = self.lang[name];
+        if (validator.priority === undefined)
+            validator.priority = 1;
+        validators[name] = validator;
+    };
+    function _buildValidators(){
+        _('text', { fn: (val) => true, priority: 0});
+        _('required', { fn: function(val){ return (this.type === 'radio' || this.type === 'checkbox') ? groupedElemCount(this) : val !== undefined && val !== ''}, priority: 99, halt: true});
+        _('email', { fn: (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)});
+        _('number', { fn: (val) => !val || !isNaN(parseFloat(val)), priority: 2 });
+        _('integer', { fn: (val) => val && /^\d+$/.test(val) });
+        _('minlength', { fn: (val, length) => !val || val.length >= parseInt(length) });
+        _('maxlength', { fn: (val, length) => !val || val.length <= parseInt(length) });
+        _('min', { fn: function(val, limit){ return !val || (this.type === 'checkbox' ? groupedElemCount(this) >= parseInt(limit) : parseFloat(val) >= parseFloat(limit)); } });
+        _('max', { fn: function(val, limit){ return !val || (this.type === 'checkbox' ? groupedElemCount(this) <= parseInt(limit) : parseFloat(val) <= parseFloat(limit)); } });
+        _('pattern', { fn: (val, pattern) => { let m = pattern.match(new RegExp('^/(.*?)/([gimy]*)$')); return !val || (new RegExp(m[1], m[2])).test(val);} });
+    }
     function _addValidatorToField(fns, params, name, value) {
         let validator = validators[name];
         if (validator) {
